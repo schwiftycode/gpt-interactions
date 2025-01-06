@@ -6,7 +6,7 @@ const motionStore = new Map();
 // Motion API specific rate limiter
 const motionLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 12, // 12 requests per minute for Motion API
+  max: 1, // 1 request per minute for Motion API
   message:
     "API rate limit exceeded for Motion API. Please try again after a minute",
   standardHeaders: true,
@@ -18,8 +18,11 @@ const motionLimiter = rateLimit({
     init: () => {},
     increment: (key) => {
       const currentCount = motionStore.get(key) || 0;
-      motionStore.set(key, currentCount + 1);
-      return Promise.resolve({});
+      const newCount = currentCount + 1;
+      motionStore.set(key, newCount);
+      return Promise.resolve({
+        totalHits: newCount,
+      });
     },
     decrement: (key) => {
       const currentCount = motionStore.get(key) || 0;
@@ -35,7 +38,9 @@ const motionLimiter = rateLimit({
       return Promise.resolve();
     },
     hits: (key) => {
-      return Promise.resolve(motionStore.get(key) || 0);
+      return Promise.resolve({
+        totalHits: motionStore.get(key) || 0,
+      });
     },
   },
 });
