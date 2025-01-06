@@ -24,9 +24,19 @@ const motionApi = axios.create({
  * @property {string} id - The unique identifier of the task
  * @property {string} title - The title of the task
  * @property {string} [description] - Optional description of the task
+ * @property {string} [projectId] - ID of the project this task belongs to
+ * @property {string} [workspaceId] - ID of the workspace this task belongs to
  * @property {string} [status] - Current status of the task
+ * @property {string} [priority] - Priority level of the task
+ * @property {string[]} [labels] - Array of labels assigned to the task
+ * @property {string} [startDate] - Start date of the task in ISO format
  * @property {string} [dueDate] - Due date of the task in ISO format
+ * @property {string} [scheduledDate] - Scheduled date of the task in ISO format
  * @property {string[]} [assignees] - Array of user IDs assigned to the task
+ * @property {number} [estimate] - Estimated time in minutes
+ * @property {number} [timeEstimate] - Time estimate in minutes
+ * @property {number} [timeSpent] - Time spent in minutes
+ * @property {Object} [customFields] - Custom fields for the task
  */
 
 /**
@@ -165,6 +175,12 @@ router.delete("/tasks/:taskId/unassign", async (req, res) => {
  * @property {string} id - The unique identifier of the recurring task
  * @property {string} title - The title of the recurring task
  * @property {string} [description] - Optional description
+ * @property {string} [projectId] - ID of the project this recurring task belongs to
+ * @property {string} workspaceId - ID of the workspace this recurring task belongs to
+ * @property {string} [priority] - Priority level of the recurring task
+ * @property {string[]} [labels] - Array of labels assigned to the recurring task
+ * @property {number} [estimate] - Estimated time in minutes
+ * @property {Object} [customFields] - Custom fields for the recurring task
  * @property {Object} recurrence - Recurrence pattern settings
  */
 

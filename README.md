@@ -29,8 +29,19 @@ All Motion API endpoints are prefixed with `/motion`
 - **Body Parameters:**
   - `title` (required): string
   - `description` (optional): string
+  - `projectId` (optional): string
+  - `workspaceId` (optional): string
+  - `status` (optional): string
+  - `priority` (optional): string
+  - `labels` (optional): array of strings
+  - `startDate` (optional): ISO date string
   - `dueDate` (optional): ISO date string
+  - `scheduledDate` (optional): ISO date string
   - `assignees` (optional): array of user IDs
+  - `estimate` (optional): number (minutes)
+  - `timeEstimate` (optional): number (minutes)
+  - `timeSpent` (optional): number (minutes)
+  - `customFields` (optional): object
 - **Response:** Created task object
 - **Error Codes:** 500
 
@@ -52,8 +63,19 @@ All Motion API endpoints are prefixed with `/motion`
 - **Body Parameters:**
   - `title` (optional): string
   - `description` (optional): string
+  - `projectId` (optional): string
+  - `workspaceId` (optional): string
   - `status` (optional): string
+  - `priority` (optional): string
+  - `labels` (optional): array of strings
+  - `startDate` (optional): ISO date string
   - `dueDate` (optional): ISO date string
+  - `scheduledDate` (optional): ISO date string
+  - `assignees` (optional): array of user IDs
+  - `estimate` (optional): number (minutes)
+  - `timeEstimate` (optional): number (minutes)
+  - `timeSpent` (optional): number (minutes)
+  - `customFields` (optional): object
 - **Response:** Updated task object
 - **Error Codes:** 404, 500
 
@@ -91,6 +113,12 @@ All Motion API endpoints are prefixed with `/motion`
 - **Body Parameters:**
   - `title` (required): string
   - `description` (optional): string
+  - `projectId` (optional): string
+  - `workspaceId` (required): string
+  - `priority` (optional): string
+  - `labels` (optional): array of strings
+  - `estimate` (optional): number (minutes)
+  - `customFields` (optional): object
   - `recurrence` (required): object
 - **Response:** Created recurring task object
 - **Error Codes:** 500
@@ -185,9 +213,21 @@ All Motion API endpoints are prefixed with `/motion`
   id: string;
   title: string;
   description?: string;
+  projectId?: string;
+  workspaceId?: string;
   status?: string;
+  priority?: string;
+  labels?: string[];
+  startDate?: string;
   dueDate?: string;
+  scheduledDate?: string;
   assignees?: string[];
+  estimate?: number;
+  timeEstimate?: number;
+  timeSpent?: number;
+  customFields?: {
+    [key: string]: any;
+  };
 }
 ```
 
@@ -198,6 +238,14 @@ All Motion API endpoints are prefixed with `/motion`
   id: string;
   title: string;
   description?: string;
+  projectId?: string;
+  workspaceId: string;
+  priority?: string;
+  labels?: string[];
+  estimate?: number;
+  customFields?: {
+    [key: string]: any;
+  };
   recurrence: object;
 }
 ```
