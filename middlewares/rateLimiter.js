@@ -1,7 +1,20 @@
 const rateLimit = require("express-rate-limit");
 
-// Create a store to track Motion API requests across all IPs
+// Create stores to track Motion API requests and their timestamps
 const motionStore = new Map();
+const lastResetStore = new Map();
+
+// Helper to check and reset if window has expired
+const checkAndResetIfExpired = (key, windowMs) => {
+  const lastReset = lastResetStore.get(key) || 0;
+  const now = Date.now();
+  if (now - lastReset >= windowMs) {
+    motionStore.delete(key);
+    lastResetStore.set(key, now);
+    return true;
+  }
+  return false;
+};
 
 // Motion API specific rate limiter
 const motionLimiter = rateLimit({
@@ -17,9 +30,13 @@ const motionLimiter = rateLimit({
   store: {
     init: () => {},
     increment: (key) => {
+      checkAndResetIfExpired(key, 60 * 1000); // Check for reset before incrementing
       const currentCount = motionStore.get(key) || 0;
       const newCount = currentCount + 1;
       motionStore.set(key, newCount);
+      if (!lastResetStore.has(key)) {
+        lastResetStore.set(key, Date.now());
+      }
       return Promise.resolve({
         totalHits: newCount,
       });
@@ -31,13 +48,16 @@ const motionLimiter = rateLimit({
     },
     resetKey: (key) => {
       motionStore.delete(key);
+      lastResetStore.set(key, Date.now());
       return Promise.resolve();
     },
     resetAll: () => {
       motionStore.clear();
+      lastResetStore.clear();
       return Promise.resolve();
     },
     hits: (key) => {
+      checkAndResetIfExpired(key, 60 * 1000); // Check for reset before returning hits
       return Promise.resolve({
         totalHits: motionStore.get(key) || 0,
       });

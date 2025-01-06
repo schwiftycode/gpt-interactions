@@ -175,8 +175,22 @@ router.delete("/tasks/:taskId/unassign", async (req, res) => {
  * @throws {Error} 500 - Failed to fetch recurring tasks
  */
 router.get("/recurring-tasks", async (req, res) => {
+  const { workspaceId } = req.query;
+
+  if (!workspaceId) {
+    return res.status(400).json({
+      error: {
+        message: "workspaceId is required",
+        error: "Bad Request",
+        statusCode: 400,
+      },
+    });
+  }
+
   try {
-    const response = await motionApi.get("/recurring-tasks");
+    const response = await motionApi.get("/recurring-tasks", {
+      params: { workspaceId },
+    });
     res.json(response.data);
   } catch (error) {
     console.error("Error fetching recurring tasks:", error.message);
@@ -197,8 +211,22 @@ router.get("/recurring-tasks", async (req, res) => {
  * @throws {Error} 500 - Failed to create recurring task
  */
 router.post("/recurring-tasks", async (req, res) => {
+  const { workspaceId } = req.query;
+
+  if (!workspaceId) {
+    return res.status(400).json({
+      error: {
+        message: "workspaceId is required",
+        error: "Bad Request",
+        statusCode: 400,
+      },
+    });
+  }
+
   try {
-    const response = await motionApi.post("/recurring-tasks", req.body);
+    const response = await motionApi.post("/recurring-tasks", req.body, {
+      params: { workspaceId },
+    });
     res.json(response.data);
   } catch (error) {
     console.error("Error creating recurring task:", error.message);
@@ -217,9 +245,24 @@ router.post("/recurring-tasks", async (req, res) => {
  * @throws {Error} 500 - Failed to delete recurring task
  */
 router.delete("/recurring-tasks/:taskId", async (req, res) => {
+  const { workspaceId } = req.query;
+
+  if (!workspaceId) {
+    return res.status(400).json({
+      error: {
+        message: "workspaceId is required",
+        error: "Bad Request",
+        statusCode: 400,
+      },
+    });
+  }
+
   try {
     const response = await motionApi.delete(
-      `/recurring-tasks/${req.params.taskId}`
+      `/recurring-tasks/${req.params.taskId}`,
+      {
+        params: { workspaceId },
+      }
     );
     res.json(response.data);
   } catch (error) {
