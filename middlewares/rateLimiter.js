@@ -6,7 +6,7 @@ const motionStore = new Map();
 // Motion API specific rate limiter
 const motionLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 1, // 1 request per minute for Motion API
+  max: 11, // 1 request per minute for Motion API
   message:
     "API rate limit exceeded for Motion API. Please try again after a minute",
   standardHeaders: true,
