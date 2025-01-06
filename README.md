@@ -19,8 +19,27 @@ All Motion API endpoints are prefixed with `/motion`
 
 - **Method:** GET
 - **Endpoint:** `/motion/tasks`
-- **Response:** Array of task objects
-- **Error Codes:** 500
+- **Query Parameters:**
+  - `workspaceId` (required): string - ID of the workspace to fetch tasks from
+  - `projectId` (optional): string - Filter tasks by project ID
+  - `status` (optional): string - Filter tasks by status (BACKLOG, TODO, IN_PROGRESS, DONE, CANCELED)
+  - `assigneeId` (optional): string - Filter tasks by assignee ID
+  - `dueDate` (optional): string - Filter tasks by due date (ISO format)
+  - `scheduledDate` (optional): string - Filter tasks by scheduled date (ISO format)
+  - `startDate` (optional): string - Filter tasks by start date (ISO format)
+  - `createdAt` (optional): string - Filter tasks by creation date (ISO format)
+  - `updatedAt` (optional): string - Filter tasks by last update date (ISO format)
+  - `priority` (optional): string - Filter tasks by priority (LOW, MEDIUM, HIGH)
+  - `labels` (optional): string[] - Filter tasks by labels
+  - `search` (optional): string - Search tasks by title or description
+  - `includeSubtasks` (optional): boolean - Include subtasks in response
+  - `includeCompletedSubtasks` (optional): boolean - Include completed subtasks
+  - `sortBy` (optional): string - Field to sort by (dueDate, createdAt, updatedAt, priority, status)
+  - `sortOrder` (optional): string - Sort order (asc, desc)
+  - `page` (optional): number - Page number for pagination (default: 1)
+  - `limit` (optional): number - Number of tasks per page (default: 50, max: 100)
+- **Response:** Array of task objects with pagination metadata
+- **Error Codes:** 400 (Missing workspaceId), 500
 
 ### Create Task
 
@@ -51,6 +70,9 @@ All Motion API endpoints are prefixed with `/motion`
 - **Endpoint:** `/motion/tasks/:taskId`
 - **URL Parameters:**
   - `taskId`: string
+- **Query Parameters:**
+  - `includeSubtasks` (optional): boolean - Include subtasks in response
+  - `includeCompletedSubtasks` (optional): boolean - Include completed subtasks
 - **Response:** Task object
 - **Error Codes:** 404, 500
 

@@ -24,30 +24,75 @@ const motionApi = axios.create({
  * @property {string} id - The unique identifier of the task
  * @property {string} title - The title of the task
  * @property {string} [description] - Optional description of the task
- * @property {string} [projectId] - ID of the project this task belongs to
- * @property {string} [workspaceId] - ID of the workspace this task belongs to
- * @property {string} [status] - Current status of the task
- * @property {string} [priority] - Priority level of the task
+ * @property {string} projectId - ID of the project this task belongs to
+ * @property {string} workspaceId - ID of the workspace this task belongs to
+ * @property {string} status - Current status of the task (BACKLOG, TODO, IN_PROGRESS, DONE, CANCELED)
+ * @property {string} [priority] - Priority level of the task (LOW, MEDIUM, HIGH)
  * @property {string[]} [labels] - Array of labels assigned to the task
- * @property {string} [startDate] - Start date of the task in ISO format
  * @property {string} [dueDate] - Due date of the task in ISO format
  * @property {string} [scheduledDate] - Scheduled date of the task in ISO format
- * @property {string[]} [assignees] - Array of user IDs assigned to the task
- * @property {number} [estimate] - Estimated time in minutes
+ * @property {Object[]} [assignees] - Array of users assigned to the task
+ * @property {string} assignees[].id - User ID
+ * @property {string} assignees[].name - User's name
+ * @property {string} assignees[].email - User's email
+ * @property {string} [assignees[].avatar] - User's avatar URL
  * @property {number} [timeEstimate] - Time estimate in minutes
- * @property {number} [timeSpent] - Time spent in minutes
  * @property {Object} [customFields] - Custom fields for the task
+ * @property {string} createdAt - Creation timestamp in ISO format
+ * @property {string} updatedAt - Last update timestamp in ISO format
  */
 
 /**
  * Retrieve all tasks
  * @route GET /tasks
- * @returns {Promise<Task[]>} Array of task objects
+ * @param {Object} req.query - Query parameters
+ * @param {string} req.query.workspaceId - ID of the workspace to fetch tasks from (required)
+ * @param {string} [req.query.projectId] - Filter tasks by project ID
+ * @param {string} [req.query.status] - Filter tasks by status (BACKLOG, TODO, IN_PROGRESS, DONE, CANCELED)
+ * @param {string} [req.query.assigneeId] - Filter tasks by assignee ID
+ * @param {string} [req.query.dueDate] - Filter tasks by due date (ISO format)
+ * @param {string} [req.query.scheduledDate] - Filter tasks by scheduled date (ISO format)
+ * @param {string} [req.query.startDate] - Filter tasks by start date (ISO format)
+ * @param {string} [req.query.createdAt] - Filter tasks by creation date (ISO format)
+ * @param {string} [req.query.updatedAt] - Filter tasks by last update date (ISO format)
+ * @param {string} [req.query.priority] - Filter tasks by priority (LOW, MEDIUM, HIGH)
+ * @param {string[]} [req.query.labels] - Filter tasks by labels
+ * @param {string} [req.query.search] - Search tasks by title or description
+ * @param {boolean} [req.query.includeSubtasks] - Include subtasks in response
+ * @param {boolean} [req.query.includeCompletedSubtasks] - Include completed subtasks
+ * @param {string} [req.query.sortBy] - Field to sort by (dueDate, createdAt, updatedAt, priority, status)
+ * @param {string} [req.query.sortOrder] - Sort order (asc, desc)
+ * @param {number} [req.query.page] - Page number for pagination (default: 1)
+ * @param {number} [req.query.limit] - Number of tasks per page (default: 50, max: 100)
+ * @returns {Promise<{data: Task[], meta: {total: number, page: number, limit: number}}>} Array of task objects with pagination metadata
+ * @throws {Error} 400 - Missing required workspaceId
  * @throws {Error} 500 - Failed to fetch tasks from Motion API
  */
 router.get("/tasks", async (req, res) => {
+  const { workspaceId } = req.query;
+
+  if (!workspaceId) {
+    return res.status(400).json({
+      error: {
+        message: "workspaceId is required",
+        error: "Bad Request",
+        statusCode: 400,
+      },
+    });
+  }
+
   try {
-    const response = await motionApi.get("/tasks");
+    // Pass through all query parameters to Motion API
+    const params = {
+      ...req.query,
+      limit: Math.min(req.query.limit || 50, 100), // Default to 50, max 100
+    };
+
+    Object.keys(params).forEach(
+      (key) => params[key] === undefined && delete params[key]
+    );
+
+    const response = await motionApi.get("/tasks", { params });
     res.json(response.data);
   } catch (error) {
     console.error("Error fetching tasks from Motion:", error.message);
@@ -84,13 +129,24 @@ router.post("/tasks", async (req, res) => {
  * Retrieve a specific task by ID
  * @route GET /tasks/:taskId
  * @param {string} req.params.taskId - ID of the task to retrieve
+ * @param {Object} req.query - Query parameters
+ * @param {boolean} [req.query.includeSubtasks] - Include subtasks in response
+ * @param {boolean} [req.query.includeCompletedSubtasks] - Include completed subtasks
  * @returns {Promise<Task>} Task object
  * @throws {Error} 404 - Task not found
  * @throws {Error} 500 - Failed to retrieve task
  */
 router.get("/tasks/:taskId", async (req, res) => {
   try {
-    const response = await motionApi.get(`/tasks/${req.params.taskId}`);
+    // Pass through all query parameters to Motion API
+    const params = { ...req.query };
+    Object.keys(params).forEach(
+      (key) => params[key] === undefined && delete params[key]
+    );
+
+    const response = await motionApi.get(`/tasks/${req.params.taskId}`, {
+      params,
+    });
     res.json(response.data);
   } catch (error) {
     console.error("Error retrieving task:", error.message);
