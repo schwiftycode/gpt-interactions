@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const rateLimiter = require("./middlewares/rateLimiter");
+const { motionLimiter, generalLimiter } = require("./middlewares/rateLimiter");
 const motionRoutes = require("./routes/motion");
 
 const app = express();
@@ -12,15 +12,21 @@ const port = process.env.PORT || 3000;
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(rateLimiter);
+// Apply general rate limiter to all routes except /motion
+app.use((req, res, next) => {
+  if (!req.path.startsWith("/motion")) {
+    return generalLimiter(req, res, next);
+  }
+  next();
+});
 
 // Health check route
 app.get("/", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date().toISOString() });
 });
 
-// Routes
-app.use("/motion", motionRoutes);
+// Routes with Motion-specific rate limiter
+app.use("/motion", motionLimiter, motionRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
