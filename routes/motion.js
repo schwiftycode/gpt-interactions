@@ -85,7 +85,7 @@ router.get("/tasks", async (req, res) => {
     // Pass through all query parameters to Motion API
     const params = {
       ...req.query,
-      limit: Math.min(req.query.limit || 50, 100), // Default to 50, max 100
+      // limit: Math.min(req.query.limit || 50, 100), // Default to 50, max 100
     };
 
     Object.keys(params).forEach(
