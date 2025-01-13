@@ -9,9 +9,9 @@ All Motion API endpoints are prefixed with `/motion`
 - Motion endpoints have a specific rate limiter
 - All other routes have a general rate limiter
 
-## Health Check
+## Authentication
 
-- `GET /` - Check API health status
+All Motion API endpoints require a workspace ID to be provided as a query parameter.
 
 ## Task Endpoints
 
@@ -21,23 +21,7 @@ All Motion API endpoints are prefixed with `/motion`
 - **Endpoint:** `/motion/tasks`
 - **Query Parameters:**
   - `workspaceId` (required): string - ID of the workspace to fetch tasks from
-  - `projectId` (optional): string - Filter tasks by project ID
-  - `status` (optional): string - Filter tasks by status (BACKLOG, TODO, IN_PROGRESS, DONE, CANCELED)
-  - `assigneeId` (optional): string - Filter tasks by assignee ID
-  - `dueDate` (optional): string - Filter tasks by due date (ISO format)
-  - `scheduledDate` (optional): string - Filter tasks by scheduled date (ISO format)
-  - `startDate` (optional): string - Filter tasks by start date (ISO format)
-  - `createdAt` (optional): string - Filter tasks by creation date (ISO format)
-  - `updatedAt` (optional): string - Filter tasks by last update date (ISO format)
-  - `priority` (optional): string - Filter tasks by priority (LOW, MEDIUM, HIGH)
-  - `labels` (optional): string[] - Filter tasks by labels
-  - `search` (optional): string - Search tasks by title or description
-  - `includeSubtasks` (optional): boolean - Include subtasks in response
-  - `includeCompletedSubtasks` (optional): boolean - Include completed subtasks
-  - `sortBy` (optional): string - Field to sort by (dueDate, createdAt, updatedAt, priority, status)
-  - `sortOrder` (optional): string - Sort order (asc, desc)
-  - `page` (optional): number - Page number for pagination (default: 1)
-  - `limit` (optional): number - Number of tasks per page (default: 50, max: 100)
+  - Additional query parameters are passed directly to the Motion API
 - **Response:** Array of task objects with pagination metadata
 - **Error Codes:** 400 (Missing workspaceId), 500
 
@@ -45,24 +29,12 @@ All Motion API endpoints are prefixed with `/motion`
 
 - **Method:** POST
 - **Endpoint:** `/motion/tasks`
+- **Query Parameters:**
+  - `workspaceId` (required): string - ID of the workspace to create task in
 - **Body Parameters:**
-  - `title` (required): string
-  - `description` (optional): string
-  - `projectId` (optional): string
-  - `workspaceId` (optional): string
-  - `status` (optional): string
-  - `priority` (optional): string
-  - `labels` (optional): array of strings
-  - `startDate` (optional): ISO date string
-  - `dueDate` (optional): ISO date string
-  - `scheduledDate` (optional): ISO date string
-  - `assignees` (optional): array of user IDs
-  - `estimate` (optional): number (minutes)
-  - `timeEstimate` (optional): number (minutes)
-  - `timeSpent` (optional): number (minutes)
-  - `customFields` (optional): object
+  - Any valid task fields supported by the Motion API
 - **Response:** Created task object
-- **Error Codes:** 500
+- **Error Codes:** 400 (Missing workspaceId), 500
 
 ### Get Task by ID
 
@@ -71,10 +43,9 @@ All Motion API endpoints are prefixed with `/motion`
 - **URL Parameters:**
   - `taskId`: string
 - **Query Parameters:**
-  - `includeSubtasks` (optional): boolean - Include subtasks in response
-  - `includeCompletedSubtasks` (optional): boolean - Include completed subtasks
+  - `workspaceId` (required): string - ID of the workspace the task belongs to
 - **Response:** Task object
-- **Error Codes:** 404, 500
+- **Error Codes:** 400 (Missing workspaceId), 404, 500
 
 ### Update Task
 
@@ -82,24 +53,12 @@ All Motion API endpoints are prefixed with `/motion`
 - **Endpoint:** `/motion/tasks/:taskId`
 - **URL Parameters:**
   - `taskId`: string
+- **Query Parameters:**
+  - `workspaceId` (required): string - ID of the workspace the task belongs to
 - **Body Parameters:**
-  - `title` (optional): string
-  - `description` (optional): string
-  - `projectId` (optional): string
-  - `workspaceId` (optional): string
-  - `status` (optional): string
-  - `priority` (optional): string
-  - `labels` (optional): array of strings
-  - `startDate` (optional): ISO date string
-  - `dueDate` (optional): ISO date string
-  - `scheduledDate` (optional): ISO date string
-  - `assignees` (optional): array of user IDs
-  - `estimate` (optional): number (minutes)
-  - `timeEstimate` (optional): number (minutes)
-  - `timeSpent` (optional): number (minutes)
-  - `customFields` (optional): object
+  - Any valid task fields that should be updated
 - **Response:** Updated task object
-- **Error Codes:** 404, 500
+- **Error Codes:** 400 (Missing workspaceId), 404, 500
 
 ### Delete Task
 
@@ -107,71 +66,10 @@ All Motion API endpoints are prefixed with `/motion`
 - **Endpoint:** `/motion/tasks/:taskId`
 - **URL Parameters:**
   - `taskId`: string
+- **Query Parameters:**
+  - `workspaceId` (required): string - ID of the workspace the task belongs to
 - **Response:** Success message
-- **Error Codes:** 404, 500
-
-### Unassign All Users from Task
-
-- **Method:** DELETE
-- **Endpoint:** `/motion/tasks/:taskId/unassign`
-- **URL Parameters:**
-  - `taskId`: string
-- **Response:** Updated task object
-- **Error Codes:** 404, 500
-
-## Recurring Task Endpoints
-
-### Get All Recurring Tasks
-
-- **Method:** GET
-- **Endpoint:** `/motion/recurring-tasks`
-- **Response:** Array of recurring task objects
-- **Error Codes:** 500
-
-### Create Recurring Task
-
-- **Method:** POST
-- **Endpoint:** `/motion/recurring-tasks`
-- **Body Parameters:**
-  - `title` (required): string
-  - `description` (optional): string
-  - `projectId` (optional): string
-  - `workspaceId` (required): string
-  - `priority` (optional): string
-  - `labels` (optional): array of strings
-  - `estimate` (optional): number (minutes)
-  - `customFields` (optional): object
-  - `recurrence` (required): object
-- **Response:** Created recurring task object
-- **Error Codes:** 500
-
-### Delete Recurring Task
-
-- **Method:** DELETE
-- **Endpoint:** `/motion/recurring-tasks/:taskId`
-- **URL Parameters:**
-  - `taskId`: string
-- **Response:** Success message
-- **Error Codes:** 404, 500
-
-## Comment Endpoints
-
-### Get All Comments
-
-- **Method:** GET
-- **Endpoint:** `/motion/comments`
-- **Response:** Array of comment objects
-- **Error Codes:** 500
-
-### Create Comment
-
-- **Method:** POST
-- **Endpoint:** `/motion/comments`
-- **Body Parameters:**
-  - `content` (required): string
-  - `taskId` (required): string
-- **Response:** Created comment object
-- **Error Codes:** 404, 500
+- **Error Codes:** 400 (Missing workspaceId), 404, 500
 
 ## Project Endpoints
 
@@ -179,8 +77,21 @@ All Motion API endpoints are prefixed with `/motion`
 
 - **Method:** GET
 - **Endpoint:** `/motion/projects`
+- **Query Parameters:**
+  - `workspaceId` (required): string - ID of the workspace to fetch projects from
 - **Response:** Array of project objects
-- **Error Codes:** 500
+- **Error Codes:** 400 (Missing workspaceId), 500
+
+### Create Project
+
+- **Method:** POST
+- **Endpoint:** `/motion/projects`
+- **Query Parameters:**
+  - `workspaceId` (required): string - ID of the workspace to create project in
+- **Body Parameters:**
+  - Any valid project fields supported by the Motion API
+- **Response:** Created project object
+- **Error Codes:** 400 (Missing workspaceId), 500
 
 ### Get Project by ID
 
@@ -188,131 +99,25 @@ All Motion API endpoints are prefixed with `/motion`
 - **Endpoint:** `/motion/projects/:projectId`
 - **URL Parameters:**
   - `projectId`: string
+- **Query Parameters:**
+  - `workspaceId` (required): string - ID of the workspace the project belongs to
 - **Response:** Project object
-- **Error Codes:** 404, 500
-
-### Create Project
-
-- **Method:** POST
-- **Endpoint:** `/motion/projects`
-- **Body Parameters:**
-  - `name` (required): string
-  - `description` (optional): string
-- **Response:** Created project object
-- **Error Codes:** 500
+- **Error Codes:** 400 (Missing workspaceId), 404, 500
 
 ## User Endpoints
-
-### Get All Users
-
-- **Method:** GET
-- **Endpoint:** `/motion/users`
-- **Response:** Array of user objects
-- **Error Codes:** 500
 
 ### Get Current User
 
 - **Method:** GET
 - **Endpoint:** `/motion/users/me`
+- **Query Parameters:**
+  - `workspaceId` (required): string - ID of the workspace to get user info from
 - **Response:** Current user object
-- **Error Codes:** 401, 500
+- **Error Codes:** 400 (Missing workspaceId), 401, 500
 
-## Schedule Endpoints
+## Implementation Notes
 
-### Get All Schedules
-
-- **Method:** GET
-- **Endpoint:** `/motion/schedules`
-- **Response:** Array of schedule objects
-- **Error Codes:** 500
-
-## Data Types
-
-### Task Object
-
-```typescript
-{
-  id: string;
-  title: string;
-  description?: string;
-  projectId?: string;
-  workspaceId?: string;
-  status?: string;
-  priority?: string;
-  labels?: string[];
-  startDate?: string;
-  dueDate?: string;
-  scheduledDate?: string;
-  assignees?: string[];
-  estimate?: number;
-  timeEstimate?: number;
-  timeSpent?: number;
-  customFields?: {
-    [key: string]: any;
-  };
-}
-```
-
-### Recurring Task Object
-
-```typescript
-{
-  id: string;
-  title: string;
-  description?: string;
-  projectId?: string;
-  workspaceId: string;
-  priority?: string;
-  labels?: string[];
-  estimate?: number;
-  customFields?: {
-    [key: string]: any;
-  };
-  recurrence: object;
-}
-```
-
-### Comment Object
-
-```typescript
-{
-  id: string;
-  content: string;
-  taskId: string;
-  userId: string;
-  createdAt: string;
-}
-```
-
-### Project Object
-
-```typescript
-{
-  id: string;
-  name: string;
-  description?: string;
-  status: string;
-}
-```
-
-### User Object
-
-```typescript
-{
-  id: string;
-  email: string;
-  name: string;
-  avatar?: string;
-}
-```
-
-### Schedule Object
-
-```typescript
-{
-  id: string;
-  userId: string;
-  availability: object;
-  preferences: object;
-}
-```
+- All endpoints proxy requests to the Motion API (https://api.usemotion.com/v1)
+- Requests require a valid Motion API key configured via environment variable
+- Workspace ID is required for all operations
+- Error responses include detailed messages from the Motion API when available

@@ -38,7 +38,7 @@ const requireWorkspaceId = (req, res, next) => {
  * Retrieve all tasks
  * @route GET /tasks
  */
-router.get("/tasks", requireWorkspaceId, async (req, res) => {
+router.get("/tasks", async (req, res) => {
   try {
     const params = { ...req.query };
     Object.keys(params).forEach(
@@ -108,14 +108,11 @@ router.get("/tasks/:taskId", requireWorkspaceId, async (req, res) => {
  * Update a specific task
  * @route PATCH /tasks/:taskId
  */
-router.patch("/tasks/:taskId", requireWorkspaceId, async (req, res) => {
+router.patch("/tasks/:taskId", async (req, res) => {
   try {
     const response = await motionApi.patch(
       `/tasks/${req.params.taskId}`,
-      req.body,
-      {
-        params: { workspaceId: req.query.workspaceId },
-      }
+      req.body
     );
     res.json(response.data);
   } catch (error) {
