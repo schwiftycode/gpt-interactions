@@ -13,7 +13,7 @@
     "setupFiles": [
       "dotenv/config"
     ],
-    "testTimeout": 30000
+    "testTimeout": 60000
   },
   "keywords": [],
   "author": "",

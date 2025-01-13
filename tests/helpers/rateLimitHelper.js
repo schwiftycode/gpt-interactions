@@ -1,6 +1,7 @@
 /**
  * Helper utility to manage rate limiting during tests
  */
+const request = require("supertest");
 
 class RateLimitHelper {
   constructor(requestsPerMinute = 11) {
@@ -35,15 +36,38 @@ class RateLimitHelper {
   }
 
   /**
-   * Wraps a function with rate limit handling
-   * @param {Function} fn Function to wrap
-   * @returns {Function} Rate limit aware function
+   * Creates a rate-limited supertest request
+   * @param {Object} app Express app
+   * @returns {Object} Rate limited supertest instance
    */
-  wrapWithRateLimit(fn) {
-    return async (...args) => {
-      await this.waitForRateLimit();
-      return fn(...args);
-    };
+  createAgent(app) {
+    const agent = request(app);
+    const methods = ["get", "post", "put", "patch", "delete"];
+    const wrappedAgent = {};
+
+    methods.forEach((method) => {
+      wrappedAgent[method] = (path) => {
+        const req = agent[method](path);
+        const originalEnd = req.end;
+
+        // Wrap the end method to handle rate limiting
+        req.end = async (callback) => {
+          await this.waitForRateLimit();
+          return originalEnd.call(req, callback);
+        };
+
+        // Add Promise support
+        const originalThen = req.then;
+        req.then = async function (...args) {
+          await this.waitForRateLimit();
+          return originalThen.apply(req, args);
+        }.bind(this);
+
+        return req;
+      };
+    });
+
+    return wrappedAgent;
   }
 }
 

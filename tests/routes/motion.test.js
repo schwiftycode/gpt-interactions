@@ -1,44 +1,62 @@
-const request = require("supertest");
 const app = require("../../server");
 const RateLimitHelper = require("../helpers/rateLimitHelper");
 
 const rateLimitHelper = new RateLimitHelper(11); // 11 requests per minute
-
-// Wrap supertest requests with rate limiting
-const agent = request(app);
-const rateLimitedGet = rateLimitHelper.wrapWithRateLimit(agent.get.bind(agent));
-const rateLimitedPost = rateLimitHelper.wrapWithRateLimit(
-  agent.post.bind(agent)
-);
-const rateLimitedPatch = rateLimitHelper.wrapWithRateLimit(
-  agent.patch.bind(agent)
-);
-const rateLimitedDelete = rateLimitHelper.wrapWithRateLimit(
-  agent.delete.bind(agent)
-);
+const agent = rateLimitHelper.createAgent(app);
 
 describe("Motion API Routes", () => {
   const workspaceId = process.env.MOTION_TEST_WORKSPACE_ID;
   let createdTaskId;
+  let projectId;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     // Ensure required env variables are set
     if (!process.env.MOTION_API_KEY || !process.env.MOTION_TEST_WORKSPACE_ID) {
       throw new Error(
         "Required environment variables MOTION_API_KEY and MOTION_TEST_WORKSPACE_ID must be set"
       );
     }
+
+    // Get a project ID for task creation
+    const projectsResponse = await agent
+      .get("/motion/projects")
+      .query({ workspaceId });
+
+    console.log(
+      "Projects Response:",
+      JSON.stringify(projectsResponse.body, null, 2)
+    );
+
+    expect(projectsResponse.status).toBe(200);
+    expect(projectsResponse.body.projects).toBeDefined();
+    expect(Array.isArray(projectsResponse.body.projects)).toBe(true);
+
+    // Create a project if none exist
+    if (projectsResponse.body.projects.length === 0) {
+      const createProjectResponse = await agent
+        .post("/motion/projects")
+        .query({ workspaceId })
+        .send({
+          name: "Test Project",
+          description: "Created by automated test",
+        });
+      expect(createProjectResponse.status).toBe(200);
+      projectId = createProjectResponse.body.id;
+    } else {
+      projectId = projectsResponse.body.projects[0].id;
+    }
   });
 
   describe("GET /tasks", () => {
     it("should return tasks when workspaceId is provided", async () => {
-      const response = await rateLimitedGet("/tasks").query({ workspaceId });
+      const response = await agent.get("/motion/tasks").query({ workspaceId });
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.tasks).toBeDefined();
+      expect(Array.isArray(response.body.tasks)).toBe(true);
     });
 
     it("should return 400 when workspaceId is missing", async () => {
-      const response = await rateLimitedGet("/tasks");
+      const response = await agent.get("/motion/tasks");
       expect(response.status).toBe(400);
       expect(response.body.error.message).toBe("workspaceId is required");
     });
@@ -47,14 +65,22 @@ describe("Motion API Routes", () => {
   describe("POST /tasks", () => {
     it("should create a new task", async () => {
       const taskData = {
-        title: "Test Task",
+        name: "Test Task",
         description: "Created by automated test",
-        workspaceId,
+        projectId: projectId,
       };
 
-      const response = await rateLimitedPost("/tasks").send(taskData);
+      const response = await agent
+        .post("/motion/tasks")
+        .query({ workspaceId })
+        .send(taskData);
+
+      if (response.status !== 200) {
+        console.log("Task Creation Error:", response.body);
+      }
+
       expect(response.status).toBe(200);
-      expect(response.body.title).toBe(taskData.title);
+      expect(response.body.name).toBe(taskData.name);
       createdTaskId = response.body.id; // Save for later tests
     });
   });
@@ -66,13 +92,17 @@ describe("Motion API Routes", () => {
         return;
       }
 
-      const response = await rateLimitedGet(`/tasks/${createdTaskId}`);
+      const response = await agent
+        .get(`/motion/tasks/${createdTaskId}`)
+        .query({ workspaceId });
       expect(response.status).toBe(200);
       expect(response.body.id).toBe(createdTaskId);
     });
 
     it("should return 404 for non-existent task", async () => {
-      const response = await rateLimitedGet("/tasks/nonexistent-id");
+      const response = await agent
+        .get("/motion/tasks/nonexistent-id")
+        .query({ workspaceId });
       expect(response.status).toBe(404);
     });
   });
@@ -85,14 +115,20 @@ describe("Motion API Routes", () => {
       }
 
       const updateData = {
-        title: "Updated Test Task",
+        name: "Updated Test Task",
       };
 
-      const response = await rateLimitedPatch(`/tasks/${createdTaskId}`).send(
-        updateData
-      );
+      const response = await agent
+        .patch(`/motion/tasks/${createdTaskId}`)
+        .query({ workspaceId })
+        .send(updateData);
+
+      if (response.status !== 200) {
+        console.log("Task Update Error:", response.body);
+      }
+
       expect(response.status).toBe(200);
-      expect(response.body.title).toBe(updateData.title);
+      expect(response.body.name).toBe(updateData.name);
     });
   });
 
@@ -103,26 +139,35 @@ describe("Motion API Routes", () => {
         return;
       }
 
-      const response = await rateLimitedDelete(`/tasks/${createdTaskId}`);
+      const response = await agent
+        .delete(`/motion/tasks/${createdTaskId}`)
+        .query({ workspaceId });
       expect(response.status).toBe(200);
 
       // Verify deletion
-      const getResponse = await rateLimitedGet(`/tasks/${createdTaskId}`);
+      const getResponse = await agent
+        .get(`/motion/tasks/${createdTaskId}`)
+        .query({ workspaceId });
       expect(getResponse.status).toBe(404);
     });
   });
 
   describe("GET /projects", () => {
     it("should return projects", async () => {
-      const response = await rateLimitedGet("/projects");
+      const response = await agent
+        .get("/motion/projects")
+        .query({ workspaceId });
       expect(response.status).toBe(200);
-      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.projects).toBeDefined();
+      expect(Array.isArray(response.body.projects)).toBe(true);
     });
   });
 
   describe("GET /users/me", () => {
     it("should return current user info", async () => {
-      const response = await rateLimitedGet("/users/me");
+      const response = await agent
+        .get("/motion/users/me")
+        .query({ workspaceId });
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty("id");
       expect(response.body).toHaveProperty("email");
