@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const { motionLimiter, generalLimiter } = require("./middlewares/rateLimiter");
-const motionRoutes = require("./routes/motion");
+const motionRoutes = require("./routes/motion/index");
 
 const app = express();
 const port = process.env.PORT || 3000;
