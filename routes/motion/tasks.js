@@ -84,14 +84,14 @@ router.get(
  */
 router.patch(
   "/:taskId",
-  requireBodyParams(["workspaceId"]),
+  requireQueryParams(["workspaceId"]),
   async (req, res) => {
     try {
       const response = await motionApi.patch(
         `/tasks/${req.params.taskId}`,
         req.body,
         {
-          params: { workspaceId: req.body.workspaceId },
+          params: { workspaceId: req.query.workspaceId },
         }
       );
       res.json(response.data);

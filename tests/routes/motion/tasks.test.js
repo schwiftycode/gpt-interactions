@@ -111,11 +111,11 @@ describe("Motion API - Tasks Routes", () => {
 
       const updateData = {
         name: "Updated Test Task",
-        workspaceId,
       };
 
       const response = await agent
         .patch(`/motion/tasks/${createdTaskId}`)
+        .query({ workspaceId })
         .send(updateData);
 
       expect(response.status).toBe(200);
@@ -129,7 +129,7 @@ describe("Motion API - Tasks Routes", () => {
 
       expect(response.status).toBe(400);
       expect(response.body.error.message).toBe(
-        "workspaceId is required in request body"
+        "workspaceId is required in query parameters"
       );
     });
   });
